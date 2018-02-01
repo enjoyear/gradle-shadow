@@ -1,0 +1,53 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:2.0.2"
+    }
+}
+
+apply plugin: "com.github.johnrengelman.shadow"
+
+configurations {
+    chen
+}
+
+dependencies {
+    compile('com.google.guava:guava:20.0') {
+        transitive = false
+    }
+}
+
+shadowJar {
+    zip64 true
+    dependencies {
+        //Exclude examples
+        exclude dependency('joda-time:.*')
+        exclude dependency('org.projectlombok:.*')
+    }
+
+    relocate('com.google.common', 'my.shaded.com.google.common') {
+        //Exclude examples
+        exclude 'com.google.common.base.*'
+    }
+
+    from sourceSets.main.output
+    //A different option is that you can rename the shaded jar such that it overwrites the default one.
+    //archiveName = "${baseName}-${spec.version}.${extension}"
+}
+
+
+artifacts {
+    chen(archives(shadowJar) {
+        builtBy shadowJar
+    })
+}

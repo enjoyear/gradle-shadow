@@ -1,0 +1,50 @@
+apply plugin: 'java'
+
+dependencies {
+    //This configuration depends on the shaded jar
+    compile project(path: ':module_provides_shaded_jar', configuration: 'chen')
+    //This configuration depends on the default jar
+    //But if the shaded jar has the same name as the default jar, which will be overwritten. So it depends on the shaded jar again in this case.
+    //compile project(':module_provides_shaded_jar')
+}
+
+apply plugin: 'distribution'
+
+//Tar doc: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Tar.html
+task tgzTask(type: Tar) {
+    print 'Creating the tar file...'
+    print buildDir.path + '/tar/' + baseName + '.tar.gz'
+    into('bin') {
+        from '../bin'
+    }
+
+    into('conf') {
+        from 'conf'
+        exclude 'example_excludeme.conf'
+    }
+
+    into('lib') {
+        //Note that this only includes runtime
+        //It doesn't include current project's jar. In practice, you only do tgzTask for root project, which doesn't have source.
+        from configurations.runtime
+    }
+
+    //Add one more layer of folder. Wraps all folders above to "chen"
+    into("chen")
+
+    destinationDir file('build/tar')
+    //This can overwrite the default name
+    //archiveName = 'wrapTheShaded.tar'
+    extension 'tar.gz'
+    compression = Compression.GZIP
+
+    //Move the tar file to somewhere
+    doLast {
+        copy {
+            from buildDir.path + '/tar/' + baseName + '.tar.gz'
+            into project.rootDir.path
+        }
+    }
+}
+
+build.dependsOn tgzTask

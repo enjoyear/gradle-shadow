@@ -1,2 +1,4 @@
 rootProject.name = 'test'
 
+include 'module_provides_shaded_jar'
+include 'module_uses_shaded_jar'
